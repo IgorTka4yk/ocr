@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "5672"]
+      interval: 5s
+      timeout: 15s
+      retries: 1
+
+  ocr-front:
+    build: ocr_front/
+    environment:
+      AMQP_URL: amqp://rabbitmq:5672
+    depends_on:
+      - rabbitmq
+    ports:
+      - "5000:5000"
+
+  ocr-back:
+    build: ocr_back/
+    restart: on-failure
+    environment:
+      AMQP_URL: amqp://rabbitmq:5672
+    depends_on:
+      - rabbitmq
+    # stdin_open: true
